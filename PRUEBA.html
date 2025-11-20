@@ -2,43 +2,77 @@
 <html>
 <head>
     <title>Prueba del Sistema</title>
+    <meta charset="UTF-8">
     <style>
         body { font-family: Arial, sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; }
         button { padding: 10px 15px; margin: 10px; background: #4285f4; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        #resultado { background: #f5f5f5; padding: 15px; margin-top: 20px; border-radius: 4px; white-space: pre-wrap; }
+        button:hover { background: #3367d6; }
+        #resultado { background: #f5f5f5; padding: 15px; margin-top: 20px; border-radius: 4px; white-space: pre-wrap; min-height: 100px; }
+        .loading { color: #666; font-style: italic; }
+        .success { color: #0a0; }
+        .error { color: #a00; }
     </style>
 </head>
 <body>
     <h1>🔧 Prueba del Sistema de Consulta</h1>
+    <p>Prueba de conexión con Google Apps Script</p>
     
-    <button onclick="probarBackend()">Probar Backend</button>
-    <button onclick="obtenerDatos()">Obtener Datos Públicos</button>
+    <button onclick="probarBackend()">1. Probar Backend</button>
+    <button onclick="obtenerDatos()">2. Obtener Datos Públicos</button>
     
-    <div id="resultado"></div>
+    <div id="resultado">Haga clic en un botón para comenzar...</div>
 
     <script>
-        // REEMPLACE ESTA URL CON LA QUE OBTUVO EN EL PASO 3
-        const URL_BACKEND = "https://script.google.com/macros/s/AKfycbyWhUYhK2etp09aoWZqQOoseQ6_8NWFGq_3cWJ6C2OOfHyfbiY4TNm40nOS_I7XzC0yLw/exec";
+        // REEMPLACE ESTA URL CON LA NUEVA URL DE SU APPS SCRIPT
+        const URL_BACKEND = "https://script.google.com/macros/s/AKfycbzkazs1zCA80_-FmQE3Si4Kks-ZwlXwHe7Vz3iJCGrxvbRk2I9sFMF1e5fNpYvarZXChw/exec";
+        
+        function mostrarResultado(mensaje, tipo = 'info') {
+            const resultado = document.getElementById('resultado');
+            resultado.textContent = mensaje;
+            resultado.className = tipo;
+        }
         
         async function probarBackend() {
+            mostrarResultado('Probando conexión con el backend...', 'loading');
+            
             try {
                 const respuesta = await fetch(URL_BACKEND + "?action=holaMundo");
                 const datos = await respuesta.json();
-                document.getElementById('resultado').textContent = JSON.stringify(datos, null, 2);
+                
+                if (datos.success) {
+                    mostrarResultado(JSON.stringify(datos, null, 2), 'success');
+                } else {
+                    mostrarResultado('Error en el backend: ' + datos.message, 'error');
+                }
             } catch (error) {
-                document.getElementById('resultado').textContent = "Error: " + error.message;
+                mostrarResultado('Error de conexión: ' + error.message + '\n\nPosible solución: Verifique la URL del backend y los permisos CORS.', 'error');
             }
         }
         
         async function obtenerDatos() {
+            mostrarResultado('Solicitando datos públicos...', 'loading');
+            
             try {
                 const respuesta = await fetch(URL_BACKEND + "?action=obtenerDatosPublicos");
                 const datos = await respuesta.json();
-                document.getElementById('resultado').textContent = JSON.stringify(datos, null, 2);
+                
+                if (datos.success) {
+                    let mensaje = `✓ ${datos.message}\n`;
+                    mensaje += `📊 Total de registros: ${datos.totalRegistros}\n\n`;
+                    mensaje += `Encabezados: ${JSON.stringify(datos.encabezados)}\n\n`;
+                    mensaje += `Datos: ${JSON.stringify(datos.data, null, 2)}`;
+                    
+                    mostrarResultado(mensaje, 'success');
+                } else {
+                    mostrarResultado('Error al obtener datos: ' + datos.message, 'error');
+                }
             } catch (error) {
-                document.getElementById('resultado').textContent = "Error: " + error.message;
+                mostrarResultado('Error de conexión: ' + error.message, 'error');
             }
         }
+        
+        // Probemos automáticamente al cargar la página
+        window.addEventListener('load', probarBackend);
     </script>
 </body>
 </html>
